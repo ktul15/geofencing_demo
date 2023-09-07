@@ -51,7 +51,18 @@ class _HomePageState extends ConsumerState<HomePage> {
                       Marker(
                         markerId: const MarkerId("currentLocation"),
                         position: LatLng(latitude, longitude),
+                      ),
+                      Marker(
+                        markerId: const MarkerId("geoFenceLocation"),
+                        position: ref.watch(tappedLocationProvider) ??
+                            LatLng(latitude, longitude),
                       )
+                    },
+                    onTap: (latlng) {
+                      debugPrint("latlng: $latlng");
+                      ref
+                          .read(tappedLocationProvider.notifier)
+                          .update((state) => latlng);
                     },
                   ),
                 ),
