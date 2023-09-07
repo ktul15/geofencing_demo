@@ -38,7 +38,7 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    return await location.getLocation();
+    return location.getLocation();
   }
 
   @override
@@ -51,7 +51,7 @@ class _HomePageState extends State<HomePage> {
           if (snapshot.connectionState == ConnectionState.done) {
             if (snapshot.hasData) {
               debugPrint(snapshot.data!.heading.toString());
-              return Text(snapshot.data!.altitude.toString());
+              return Text(snapshot.data!.longitude.toString());
             }
             return Text(snapshot.error.toString());
           } else {
