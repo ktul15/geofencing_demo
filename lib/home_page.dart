@@ -1,64 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geofencing_demo/location_provider.dart';
 import 'package:location/location.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<ConsumerStatefulWidget> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  Location location = Location();
-  late Future<LocationData?> _currentLocation;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentLocation = getCurrentLocation();
-  }
-
-  Future<LocationData?> getCurrentLocation() async {
-    bool serviceEnabled;
-    PermissionStatus permissionGranted;
-
-    serviceEnabled = await location.serviceEnabled();
-    if (!serviceEnabled) {
-      serviceEnabled = await location.requestService();
-      if (!serviceEnabled) {
-        return null;
-      }
-    }
-
-    permissionGranted = await location.hasPermission();
-    if (permissionGranted == PermissionStatus.denied) {
-      permissionGranted = await location.requestPermission();
-      if (permissionGranted != PermissionStatus.granted) {
-        return null;
-      }
-    }
-
-    return location.getLocation();
-  }
-
+class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-          child: FutureBuilder(
-        future: _currentLocation,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            if (snapshot.hasData) {
-              debugPrint(snapshot.data!.heading.toString());
-              return Text(snapshot.data!.longitude.toString());
-            }
-            return Text(snapshot.error.toString());
-          } else {
-            return const CircularProgressIndicator();
-          }
-        },
-      )),
+      body: ref.watch(locationDataFutureProvider).when(
+            data: (data) {
+              return Center(child: Text(data!.longitude.toString()));
+            },
+            error: (error, stackTrace) => Center(child: Text(error.toString())),
+            loading: () => const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(
+                    height: 16,
+                  ),
+                  Text("Please wait. This might take some time.")
+                ],
+              ),
+            ),
+          ),
     );
   }
 }
