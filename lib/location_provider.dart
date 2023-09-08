@@ -4,12 +4,12 @@ import 'package:geofencing_demo/location_data_state.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 
-final locationDataProvider =
+final currentUserLocationProvider =
     StateNotifierProvider<LocationDataNotifier, LocationDataState>((ref) {
   return LocationDataNotifier();
 });
 
-final tappedLocationProvider = StateProvider<LatLng?>((ref) {
+final geofenceLocationProvider = StateProvider<LatLng?>((ref) {
   return null;
 });
 
@@ -61,3 +61,53 @@ class LocationDataNotifier extends StateNotifier<LocationDataState> {
     debugPrint("isLoading: ${state.isLoading}");
   }
 }
+
+final markerSetProvider = StateProvider<Set<Marker>>((ref) {
+  final locationData = ref.watch(currentUserLocationProvider).locationData;
+  final tappedLocation = ref.watch(geofenceLocationProvider);
+
+  // If user has tapped a location on the map, then show 2 markers, else show one.
+  if (tappedLocation != null) {
+    return {
+      Marker(
+        markerId: const MarkerId("currentLocation"),
+        position: LatLng(locationData!.latitude!, locationData.longitude!),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+      ),
+      Marker(
+        markerId: const MarkerId("geofenceLocation"),
+        position: LatLng(tappedLocation.latitude, tappedLocation.longitude),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      ),
+    };
+  } else if (locationData != null) {
+    return {
+      Marker(
+        markerId: const MarkerId("currentLocation"),
+        position: LatLng(locationData.latitude!, locationData.longitude!),
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+      )
+    };
+  } else {
+    return {};
+  }
+});
+
+final geofenceCircleProvider = StateProvider<Set<Circle>>((ref) {
+  final locationData = ref.watch(geofenceLocationProvider);
+
+  if (locationData != null) {
+    return {
+      Circle(
+        circleId: const CircleId("geo_fence_1"),
+        center: ref.watch(geofenceLocationProvider) ??
+            LatLng(locationData.latitude, locationData.longitude),
+        radius: 100,
+        fillColor: Colors.lightBlue.withOpacity(0.3),
+        strokeWidth: 0,
+      )
+    };
+  } else {
+    return {};
+  }
+});

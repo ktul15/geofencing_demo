@@ -20,9 +20,13 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(locationDataProvider).isLoading;
-    final locationData = ref.watch(locationDataProvider).locationData;
-    debugPrint("isLoading from build: $isLoading");
+    final isLoading = ref.watch(currentUserLocationProvider).isLoading;
+    final locationData = ref.watch(currentUserLocationProvider).locationData;
+
+    late Set<Marker> markers = ref.watch(markerSetProvider);
+
+    final Set<Circle> geofenceCircle = ref.watch(geofenceCircleProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -47,7 +51,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               )
             : Center(
                 child: SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.4,
+                  height: MediaQuery.of(context).size.height * 0.5,
                   width: MediaQuery.of(context).size.width,
                   child: GoogleMap(
                     mapType: MapType.hybrid,
@@ -61,36 +65,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ),
                       zoom: 14.4746,
                     ),
-                    markers: {
-                      Marker(
-                        markerId: const MarkerId("currentLocation"),
-                        position: LatLng(
-                            locationData.latitude!, locationData.longitude!),
-                      ),
-                      Marker(
-                        icon: BitmapDescriptor.defaultMarkerWithHue(
-                            BitmapDescriptor.hueGreen),
-                        markerId: const MarkerId("geoFenceLocation"),
-                        position: ref.watch(tappedLocationProvider) ??
-                            LatLng(locationData.latitude!,
-                                locationData.longitude!),
-                      )
-                    },
-                    circles: {
-                      Circle(
-                        circleId: const CircleId("geo_fence_1"),
-                        center: ref.watch(tappedLocationProvider) ??
-                            LatLng(locationData.latitude!,
-                                locationData.longitude!),
-                        radius: 100,
-                        fillColor: Colors.lightBlue.withOpacity(0.3),
-                        strokeWidth: 0,
-                      )
-                    },
+                    markers: markers,
+                    circles: geofenceCircle,
                     onTap: (latlng) {
+                      // save geofence location
                       ref
-                          .read(tappedLocationProvider.notifier)
+                          .read(geofenceLocationProvider.notifier)
                           .update((state) => latlng);
+                      startGeofenceService(latlng);
                     },
                   ),
                 ),
