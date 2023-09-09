@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geofence_service/geofence_service.dart';
 import 'package:geofencing_demo/location_provider.dart';
+import 'package:geofencing_demo/services/geofence_service.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 
@@ -17,6 +18,12 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   final Completer<GoogleMapController> _controller =
       Completer<GoogleMapController>();
+
+  @override
+  void initState() {
+    super.initState();
+    ref.read(geofenceServiceProvider).startService();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +79,16 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ref
                           .read(geofenceLocationProvider.notifier)
                           .update((state) => latlng);
+                      ref.read(geofenceServiceProvider).addGeofence(Geofence(
+                              id: "fence_1",
+                              latitude: latlng.latitude,
+                              longitude: latlng.longitude,
+                              radius: [
+                                GeofenceRadius(id: "radius_1", length: 100),
+                                GeofenceRadius(id: "radius_2", length: 100),
+                                GeofenceRadius(id: "radius_3", length: 100),
+                                GeofenceRadius(id: "radius_4", length: 100),
+                              ]));
                       startGeofenceService(latlng);
                     },
                   ),
@@ -109,4 +126,5 @@ void startGeofenceService(LatLng latlng) {
   geofenceService
       .start(geofenceList)
       .catchError((e) => debugPrint("error: $e"));
+  debugPrint(geofenceService.toString());
 }
