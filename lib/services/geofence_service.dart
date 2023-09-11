@@ -8,7 +8,7 @@ final geofenceServiceProvider = Provider<CustomGeofenceService>((ref) {
 
 class CustomGeofenceService {
   late final geofenceService;
-  late List<Geofence> geofenceList;
+  late List<Geofence> geofenceList = [];
 
   void startService() {
     geofenceService = GeofenceService.instance.setup(
@@ -28,7 +28,9 @@ class CustomGeofenceService {
   }
 
   void addGeofence(Geofence geofence) {
-    geofenceList.removeAt(0);
+    if (geofenceList.isNotEmpty) {
+      geofenceList.removeAt(0);
+    }
     geofenceList.add(geofence);
   }
 }

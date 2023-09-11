@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geofencing_demo/location_data_state.dart';
+import 'package:geofencing_demo/utils.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 
 final currentUserLocationProvider =
     StateNotifierProvider<LocationDataNotifier, LocationDataState>((ref) {
-  return LocationDataNotifier();
+  return LocationDataNotifier(ref: ref);
 });
 
 final geofenceLocationProvider = StateProvider<LatLng?>((ref) {
@@ -14,7 +15,9 @@ final geofenceLocationProvider = StateProvider<LatLng?>((ref) {
 });
 
 class LocationDataNotifier extends StateNotifier<LocationDataState> {
-  LocationDataNotifier()
+  final dynamic ref;
+
+  LocationDataNotifier({required this.ref})
       : super(
           LocationDataState(
             locationData: null,
@@ -28,11 +31,34 @@ class LocationDataNotifier extends StateNotifier<LocationDataState> {
 
   Future<void> getLocation() async {
     state = state.copyWith(isLoading: true);
-    // debugPrint("isLoading ${state.isLoading}");
 
     Location location = Location();
     bool serviceEnabled;
     PermissionStatus permissionGranted;
+    LocationData currentLocation;
+
+    location.onLocationChanged.listen((newLocation) {
+      debugPrint("location changed");
+      state = state.copyWith(isLoading: false, locationData: newLocation);
+
+      var currentLocation = ref.read(currentUserLocationProvider).locationData;
+      var fenceCenter = ref.read(geofenceLocationProvider);
+      double distance = getDistance(
+          LatLng(currentLocation!.latitude!, currentLocation.longitude!),
+          LatLng(fenceCenter!.latitude, fenceCenter.longitude));
+
+      debugPrint("distance: $distance");
+
+      if (distance < 100) {
+        ref
+            .read(userStatusProvider.notifier)
+            .update((state) => "User is inside the circle");
+      } else {
+        ref
+            .read(userStatusProvider.notifier)
+            .update((state) => "User is outside the circle");
+      }
+    });
 
     serviceEnabled = await location.serviceEnabled();
     if (!serviceEnabled) {
@@ -54,7 +80,7 @@ class LocationDataNotifier extends StateNotifier<LocationDataState> {
       }
     }
 
-    final currentLocation = await location.getLocation();
+    currentLocation = await location.getLocation();
     debugPrint("location: $currentLocation");
     state = state.copyWith(isLoading: false, locationData: currentLocation);
     debugPrint("location: ${state.locationData}");
@@ -110,4 +136,8 @@ final geofenceCircleProvider = StateProvider<Set<Circle>>((ref) {
   } else {
     return {};
   }
+});
+
+final userStatusProvider = StateProvider<String?>((ref) {
+  return null;
 });
