@@ -24,31 +24,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     ref.read(geofenceServiceProvider).startService();
-
-    location.onLocationChanged.listen((event) {
-      debugPrint("location changed");
-
-      var currentLocation = ref.read(currentUserLocationProvider).locationData;
-      var fenceCenter = ref.read(geofenceLocationProvider);
-
-      if (currentLocation != null && fenceCenter != null) {
-        double distance = getDistance(
-            LatLng(currentLocation.latitude!, currentLocation.longitude!),
-            LatLng(fenceCenter.latitude, fenceCenter.longitude));
-
-        debugPrint("distance: $distance");
-
-        if (distance < 100) {
-          ref
-              .read(userStatusProvider.notifier)
-              .update((state) => "User is inside the circle");
-        } else {
-          ref
-              .read(userStatusProvider.notifier)
-              .update((state) => "User is outside the circle");
-        }
-      }
-    });
   }
 
   @override
@@ -86,8 +61,16 @@ class _HomePageState extends ConsumerState<HomePage> {
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const Text(
+                      "Note: Tap on the map to create a geofence. Green marker represents user's current location. App will notify you whenever user enters the geofence or exits the geofence!"),
+                  const SizedBox(
+                    height: 16,
+                  ),
                   Text(
                       "currentLocation: ${ref.watch(currentUserLocationProvider).locationData}"),
+                  const SizedBox(
+                    height: 16,
+                  ),
                   Text(userStatus ?? ""),
                   const SizedBox(
                     height: 16,
